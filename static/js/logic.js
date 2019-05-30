@@ -8,7 +8,7 @@ var myMap = L.map("map", {
 L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
   attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
   maxZoom: 10,
-  id: "mapbox.streets",
+  id: "mapbox.light",
   accessToken: API_KEY
 }).addTo(myMap);
 
@@ -18,20 +18,20 @@ var baseURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_wee
 // Assemble API query URL
 var url = baseURL
 
-// Function that will determine the color of a neighborhood based on the borough it belongs to
+
 function chooseColor(intensity) {
   var color="red";
-  if (intensity<1) { color="#00FF00"; 
+  if (intensity<1) { color="rgb(220,255,0)"; 
     
-  } else {if (intensity<2) {color="#32C800";
+  } else {if (intensity<2) {color="rgb(220,200,0)";
     
-  } else {if (intensity<3) {color="#649600";
+  } else {if (intensity<3) {color="rgb(220,150,0)";
     
-  } else {if (intensity<4) {color="#966400";
+  } else {if (intensity<4) {color="rgb(220,100,0)";
     
-  } else {if (intensity<5) {color="#C83200"
+  } else {if (intensity<5) {color="rgb(220,50,0)"
     
-  } else {color="#FF0000";}}}}}
+  } else {color="rgb(220,0,0)";}}}}}
 
   return color;
 
@@ -46,14 +46,17 @@ d3.json(url,function(data) {
     
     pointToLayer: function (feature,latlng) {                    
       return new L.CircleMarker(latlng, {
-          radius: (feature.properties.mag)*7,
+          // radius: (feature.properties.mag)*7,
+          radius: (myMap.getZoom())*feature.properties.mag,
           fillColor: chooseColor(feature.properties.mag),
           color: "black",
           weight: .5,
           opacity: 0.4,
-          fillOpacity: 0.4
+          fillOpacity: .8
       });
   },
+
+  
     onEachFeature: function(feature, layer) {
       
       // Giving each feature a pop-up with information pertinent to it
@@ -62,29 +65,23 @@ d3.json(url,function(data) {
     }
   }).addTo(myMap);
 });
-// Grab the data with d3
-// d3.json(url, function(response) {
 
-//   // Create a new marker cluster group
-//   var markers = L.markerClusterGroup();
+var legend = L.control({position: 'bottomright'});
+legend.onAdd = function (map) {
 
-//   // Loop through data
-//   for (var i = 0; i < response.length; i++) {
+  var div = L.DomUtil.create('div', 'infolegend');
+  labels = ['<strong>Categories</strong>'],
+  categories = ['0-1','1-2','2-3','3-4','4-5','5+'];
 
-//     // Set the data location property to a variable
-//     var location = response[i].location;
+  for (var i = 0; i < categories.length; i++) {
 
-//     // Check for location property
-//     if (location) {
+          div.innerHTML += 
+          labels.push(
+            '<span style="padding-left:5px;"></span>'+'<i class="colorLabel" style="size:10px;padding:3px 5px;border:1px solid #a1a1a1;background-color:'+chooseColor(Number(categories[i].substring(0,1)))+'"></i>'+
+              '<span style="padding-left:10px;"></span>'+categories[i]);
 
-//       // Add a new marker to the cluster group and bind a pop-up
-//       markers.addLayer(L.marker([location.coordinates[1], location.coordinates[0]])
-//         .bindPopup(response[i].descriptor));
-//     }
-
-//   }
-
-//   // Add our marker cluster layer to the map
-//   myMap.addLayer(markers);
-
-// });
+      }
+      div.innerHTML = labels.join('<br>');
+  return div;
+  };
+legend.addTo(myMap);
